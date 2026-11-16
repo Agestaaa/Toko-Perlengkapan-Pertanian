@@ -1,0 +1,1 @@
+@main def halo() = println("Scala jalan!")
