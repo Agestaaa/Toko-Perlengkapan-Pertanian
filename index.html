@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Katalog Toko Tani</title>
+  <link rel="stylesheet" media="screen" href="https://fontlibrary.org/face/minecraftia" type="text/css"/>
+  <style>
+    body { font-family: MinecraftiaRegular, sans-serif; background: #f1f6ee; margin: 0; padding: 24px; color: #223; }
+    .box { max-width: 760px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+    h1 { margin-top: 0; color: #a0b9a1; }
+    form { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 20px; }
+    input[type=text], select { padding: 8px; border: 1px solid #bbb; border-radius: 6px; font-size: 14px; }
+    input[type=text] { flex: 1; min-width: 180px; }
+    button { padding: 9px 18px; background: #2e7d32; color: #fff; border: 0; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    button:hover { background: #256528; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; border-bottom: 1px solid #e3e3e3; text-align: left; }
+    th { background: #e8f2e6; }
+    .habis { color: #c62828; font-weight: bold; }
+    .ada { color: #2e7d32; font-weight: bold; }
+    #info { margin: 10px 0; color: #555; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Katalog Produk Toko Tani</h1>
+
+    <form id="form">
+      <input type="text" id="nama" placeholder="Cari nama produk...">
+      <select id="kategori">
+        <option value="">Semua kategori</option>
+        <option>Pupuk</option>
+        <option>Alat</option>
+        <option>Benih</option>
+        <option>Pestisida</option>
+      </select>
+      <label><input type="checkbox" id="tersedia"> Hanya stok tersedia</label>
+      <button type="submit">Cari</button>
+    </form>
+
+    <div id="info"></div>
+    <div id="hasil"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('form');
+    const info = document.getElementById('info');
+    const hasil = document.getElementById('hasil');
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    async function cari() {
+      const params = new URLSearchParams({
+        nama: document.getElementById('nama').value,
+        kategori: document.getElementById('kategori').value,
+        tersedia: document.getElementById('tersedia').checked ? 'true' : ''
+      });
+
+      try {
+        const res = await fetch('/api/produk?' + params.toString());
+        const data = await res.json();
+        tampilkan(data);
+      } catch (e) {
+        info.textContent = '';
+        hasil.innerHTML = '<p class="habis">Gagal menghubungi backend.</p>';
+      }
+    }
+
+    function tampilkan(data) {
+      info.textContent = data.length + ' produk ditemukan';
+      if (data.length === 0) {
+        hasil.innerHTML = '<p>Produk tidak ditemukan.</p>';
+        return;
+      }
+      let baris = data.map(p => `
+        <tr>
+          <td>${esc(p.nama)}</td>
+          <td>${esc(p.kategori)}</td>
+          <td class="${p.stok > 0 ? 'ada' : 'habis'}">${p.stok > 0 ? p.stok : 'Habis'}</td>
+        </tr>`).join('');
+      hasil.innerHTML = `
+        <table>
+          <tr><th>Nama</th><th>Kategori</th><th>Stok</th></tr>
+          ${baris}
+        </table>`;
+    }
+
+    form.addEventListener('submit', e => { e.preventDefault(); cari(); });
+    cari(); // tampilkan semua produk saat halaman dibuka
+  </script>
+</body>
+</html>
