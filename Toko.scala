@@ -1,16 +1,7 @@
 //> using dep com.lihaoyi::cask:0.9.4
 
-// ============================================================
-// Katalog Produk Toko Perlengkapan Pertanian
-// Backend: Scala 3 + Cask
-// ============================================================
-
-// 1. MODEL DATA
 case class Produk(id: Int, nama: String, kategori: String, stok: Int)
 
-// 2. FUNGSI REKURSIF BUATAN SENDIRI (tanpa filter bawaan Scala)
-//    - Base case     : list kosong -> hasil list kosong
-//    - Recursive case: cek head dengan predicate, lanjut ke tail
 def filterRec[A](list: List[A], pred: A => Boolean): List[A] =
   list match
     case Nil => Nil
@@ -18,7 +9,6 @@ def filterRec[A](list: List[A], pred: A => Boolean): List[A] =
       if pred(head) then head :: filterRec(tail, pred)
       else filterRec(tail, pred)
 
-// 3. PREDICATE (tipe: Produk => Boolean)
 def namaMengandung(q: String): Produk => Boolean =
   p => p.nama.toLowerCase.contains(q.toLowerCase)
 
@@ -28,8 +18,6 @@ def kategoriSama(k: String): Produk => Boolean =
 val stokTersedia: Produk => Boolean =
   p => p.stok > 0
 
-// Menggabungkan banyak predicate dengan logika AND, juga secara rekursif.
-// List kosong -> semua produk lolos (tidak ada filter).
 def gabung(preds: List[Produk => Boolean]): Produk => Boolean =
   preds match
     case Nil          => _ => true
@@ -39,7 +27,6 @@ object TokoApp extends cask.MainRoutes:
 
   override def port: Int = 8080
 
-  // 4. DATA PRODUK
   val daftarProduk = List(
     Produk(1, "Pupuk Urea 50kg", "Pupuk", 20),
     Produk(2, "Pupuk NPK 25kg", "Pupuk", 0),
@@ -54,7 +41,6 @@ object TokoApp extends cask.MainRoutes:
     Produk(11, "Fungisida Daun", "Pestisida", 0)
   )
 
-  // 5. HALAMAN UTAMA (frontend)
   @cask.get("/")
   def index() =
     cask.Response(
@@ -62,10 +48,8 @@ object TokoApp extends cask.MainRoutes:
       headers = Seq("Content-Type" -> "text/html; charset=utf-8")
     )
 
-  // 6. ENDPOINT API: /api/produk?nama=...&kategori=...&tersedia=true
   @cask.get("/api/produk")
   def cariProduk(nama: String = "", kategori: String = "", tersedia: String = "") =
-    // Hanya masukkan predicate dari filter yang diisi pengguna
     val preds: List[Produk => Boolean] =
       List(
         if nama.trim.nonEmpty then Some(namaMengandung(nama.trim)) else None,
